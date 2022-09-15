@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Threading;
 using System.Linq;
@@ -57,11 +57,17 @@ namespace main
             Console.Clear();
             if (isDoor_open)
             {
-                Console.WriteLine("Продукты:");
-                foreach (var item in products)
+                
+                if (products.Length > 0)
                 {
-                    Console.WriteLine(item);
+                    Console.WriteLine("Продукты:");
+                    foreach (var item in products)
+                    {
+                        Console.WriteLine(item);
+                    }
                 }
+                else
+                    Console.WriteLine("Холодильник пустой");
             }
             else
             {
@@ -141,18 +147,19 @@ namespace main
             Console.WriteLine("Доступный диапазон изменения температуры: 1-9°C");
             Console.Write("Введите температуру для установки: ");
             int change_t = int.Parse(Console.ReadLine());
+            Console.Clear();
             if (change_t < 1 || change_t > 9)
             {
-                Console.Clear();
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Недопустимая температура для изменения");
                 Console.ResetColor();
             }
             else
             {
-                if (change_t < 3)
+                if (temp == change_t)
+                    Console.WriteLine("Чё, совсем кактус, да?");
+                else if (change_t < 3)
                 {
-                    Console.Clear();
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Угроза заморозки продуктов!");
                     Console.ResetColor();
@@ -162,7 +169,6 @@ namespace main
                     {
                         Console.Clear();
                         temp = change_t;
-                        Console.WriteLine();
 
                         Console.ForegroundColor = ConsoleColor.Blue;
                         Console.WriteLine("Температура изменена!");
@@ -190,7 +196,31 @@ namespace main
             }
         }
 
-        protected string[] Remove_products(string[] products, string del_value)
+        public void Freeze_products(Random random, ref bool is_Empty)
+        {
+            int id = random.Next(products.Length);
+            if (random.Next(4) == 3 && temp < 3 && products.Length > 0)
+            {
+                is_Empty = false;
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine($"Продукт {products[id]} был заморожен и не подлежит употреблению!");
+                Console.ResetColor();
+                products = Remove_products(products, products[id]);
+            }
+            else if (products.Length == 0 && !is_Empty)
+            {
+                temp = 6;
+                is_Empty = true;
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine("У вас не осталось продуктов и вам ПРИШЛОСЬ изменить температуру");
+                Console.WriteLine($"Температура установлена на {temp}°C");
+                Console.ResetColor();
+            }
+            else
+                return;
+        }
+
+        private string[] Remove_products(string[] products, string del_value)
         {
             string[] new_products = new string[products.Length - 1];
             int index;
@@ -211,7 +241,7 @@ namespace main
             return new_products;
         }
 
-        protected string[] Add_products(string[] products, string add_value)
+        private string[] Add_products(string[] products, string add_value)
         {
             string[] new_products = new string[products.Length + 1];
             for (int i = 0; i < products.Length; i++)
@@ -232,9 +262,10 @@ namespace main
         {
             Fridge fridge = new Fridge();
             Random random = new Random();
+            bool is_Empty = false;
             while (true)
             {
-                Console.WriteLine("Что хотите сделать?");
+                fridge.Freeze_products(random, ref is_Empty);
                 Console.WriteLine("Доступные действия: \n открыть/закрыть дверь(1) \n посмотреть температуру/продукты(2) \n взять/положить продукты(3) \n изменить температуру(4) \n \n закрыть программу(0)");
                 int num_choise = int.Parse(Console.ReadLine());
                 switch (num_choise)
@@ -296,12 +327,15 @@ namespace main
                         fridge.Change_T();
                         break;
                     default:
+                        Console.Clear();
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Неверный ввод");
+                        Console.ResetColor();
                         break;
                 }
                 if (num_choise == 0)
                     break;
-                Console.WriteLine("Нажмите Enter, чтобы продолжить выполнение программы/любую кнопку для закрытия");
+                Console.WriteLine("\nНажмите Enter, чтобы продолжить выполнение программы/любую кнопку для закрытия");
                 ConsoleKey end_key = Console.ReadKey(true).Key;
                 if (end_key == ConsoleKey.Enter)
                 {
